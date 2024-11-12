@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Labirin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Game Labirin</h1>
+        <div class="info">
+            <p>Langkah: <span id="steps">0</span></p>
+            <p>Jarak Terpendek: <span id="shortest">0</span></p>
+        </div>
+        <div id="maze"></div>
+        <div class="buttons">
+            <button id="resetBtn">Reset Game</button>
+            <button id="showPathBtn">Tampilkan Jalur Terpendek</button>
+        </div>
+        <p class="instructions">
+            Gunakan tombol panah untuk menggerakkan karakter (🟦)
+            <br>
+            🟩 = Titik Awal | ⬛ = Tembok | 🟥 = Titik Akhir | 🟨 = Jalur Terpendek
+        </p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
