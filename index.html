@@ -1,28 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Labirin</title>
+    <title>Game Labirin Acak</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Game Labirin</h1>
-        <div class="info">
-            <p>Langkah: <span id="steps">0</span></p>
-            <p>Jarak Terpendek: <span id="shortest">0</span></p>
+        <h1>Bantu Araragi Koyomi untuk menemukan Senjougahara Hitagi</h1>
+        
+        <div class="game-info">
+            <div class="stats">
+                <div class="stat-item">
+                    <span>Langkah:</span>
+                    <span id="steps" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Jarak Terpendek:</span>
+                    <span id="shortest" class="stat-value">0</span>
+                </div>
+            </div>
         </div>
-        <div id="maze"></div>
-        <div class="buttons">
-            <button id="resetBtn">Reset Game</button>
-            <button id="showPathBtn">Tampilkan Jalur Terpendek</button>
+
+        <div id="maze" class="maze-container"></div>
+
+        <div class="game-controls">
+            <div class="navigation-preview">
+                <div class="nav-keys">
+                    <button class="nav-btn nav-up" data-key="ArrowUp">▲</button>
+                    <div class="nav-side">
+                        <button class="nav-btn nav-left" data-key="ArrowLeft">◀</button>
+                        <button class="nav-btn nav-right" data-key="ArrowRight">▶</button>
+                    </div>
+                    <button class="nav-btn nav-down" data-key="ArrowDown">▼</button>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="resetBtn" class="btn btn-reset">🔄 Reset Game</button>
+                <button id="nextMapBtn" class="btn btn-new-map">🗺️ Peta Baru</button>
+                <button id="showPathBtn" class="btn btn-path">🧭 Tampilkan Jalur Terpendek</button>
+            </div>
         </div>
-        <p class="instructions">
-            Gunakan tombol panah untuk menggerakkan karakter (🟦)
-            <br>
-            ⬛ = Tembok | 🟥 = Titik Akhir | 🟨 = Jalur Terpendek
-        </p>
+
+        <div class="game-details">
+            <div class="character-selection">
+                <h3>Araragi Koyomi</h3>
+                <img id="character" src="character.png" alt="Karakter" width="50" height="50">
+            </div>
+            <div class="finish-selection">
+                <h3>Senjougahara Hitagi</h3>
+                <img id="finish" src="finish.png" alt="Titik Finish" width="50" height="50">
+            </div>
+        </div>
+
+        <div class="instructions">
+            <p>Gunakan tombol panah atau tombol navigasi untuk membantu Araragi. Capailah titik finish secepat mungkin!</p>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
