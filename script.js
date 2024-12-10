@@ -42,29 +42,65 @@ class MazeGenerator {
     }
 
     recursiveBacktrack(x, y) {
-        // Tandai sel saat ini sebagai path
+        // Tandai sel saat ini sebagai jalur
         this.maze[y][x] = 0;
-
-        // Arah acak
+    
+        // Arah acak untuk menghindari pola tetap
         const directions = this.shuffleDirections([
-            {dx: 0, dy: 1},   // Bawah
-            {dx: 1, dy: 0},   // Kanan
-            {dx: 0, dy: -1},  // Atas
-            {dx: -1, dy: 0}   // Kiri
+            { dx: 0, dy: 1 },   // Bawah
+            { dx: 1, dy: 0 },   // Kanan
+            { dx: 0, dy: -1 },  // Atas
+            { dx: -1, dy: 0 }   // Kiri
         ]);
-
-        for (let {dx, dy} of directions) {
+    
+        for (let { dx, dy } of directions) {
             const newX = x + dx * 2;
             const newY = y + dy * 2;
-
-            // Periksa batas dan apakah sel belum dikunjungi
-            if (this.isValidCell(newX, newY)) {
+    
+            // Periksa apakah sel valid untuk dibuka
+            if (this.isValidCell(newX, newY) && this.noBlockFormation(newX, newY)) {
                 // Buka jalur antar sel
-                this.maze[y + dy][x + dx] = 0;
-                this.recursiveBacktrack(newX, newY);
+                this.maze[y + dy][x + dx] = 0; // Buka dinding antara
+                this.recursiveBacktrack(newX, newY); // Lanjutkan rekursif
             }
         }
     }
+    
+    noBlockFormation(x, y) {
+        const surroundingCells = [
+            { nx: x - 1, ny: y - 1 }, { nx: x, ny: y - 1 }, { nx: x + 1, ny: y - 1 },
+            { nx: x - 1, ny: y },                     { nx: x + 1, ny: y },
+            { nx: x - 1, ny: y + 1 }, { nx: x, ny: y + 1 }, { nx: x + 1, ny: y + 1 }
+        ];
+    
+        let openPaths = 0;
+        let consecutiveOpenPaths = 0;
+        let maxConsecutiveOpenPaths = 1; // Batasi maksimal 2 jalur berurutan
+    
+        for (let i = 0; i < surroundingCells.length; i++) {
+            const { nx, ny } = surroundingCells[i];
+            
+            if (
+                nx >= 0 && ny >= 0 && 
+                nx < this.size && ny < this.size && 
+                this.maze[ny][nx] === 0
+            ) {
+                openPaths++;
+                consecutiveOpenPaths++;
+                
+                // Reset jika terputus
+                if (i > 0 && surroundingCells[i-1].nx !== nx - 1) {
+                    consecutiveOpenPaths = 1;
+                }
+            } else {
+                consecutiveOpenPaths = 0;
+            }
+        }
+    
+        // Batasi jumlah jalur dan panjang jalur berurutan
+        return openPaths <= 1 && consecutiveOpenPaths <= maxConsecutiveOpenPaths;
+    }
+    
 
     isValidCell(x, y) {
         return x >= 0 && x < this.size && 
@@ -82,7 +118,7 @@ class MazeGenerator {
 }
 
 class ComplexMazeGenerator extends MazeGenerator {
-    constructor(size = 10) {
+    constructor(size = 20) {
         super(size);
     }
 
@@ -384,27 +420,133 @@ class MazeGame {
     ensurePathBetweenStartAndEnd() {
         let currentX = this.player.x;
         let currentY = this.player.y;
-
-        const maxAttempts = 100;
+    
+        const maxAttempts = 200;
         let attempts = 0;
-
+    
+        // Variabel untuk mengontrol jalur lurus
+        let lastDirection = null;
+        let straightSteps = 0;
+    
+        const directions = [
+            {dx: 1, dy: 0},   // Kanan
+            {dx: -1, dy: 0},  // Kiri
+            {dx: 0, dy: 1},   // Bawah
+            {dx: 0, dy: -1}   // Atas
+        ];
+    
         while ((currentX !== this.end.x || currentY !== this.end.y) && attempts < maxAttempts) {
-            // Gerakkan menuju titik akhir
-            if (currentX < this.end.x) currentX++;
-            else if (currentX > this.end.x) currentX--;
-            
-            if (currentY < this.end.y) currentY++;
-            else if (currentY > this.end.y) currentY--;
-
+            // Filter arah yang memungkinkan
+            const validDirections = directions.filter(dir => {
+                const newX = currentX + dir.dx;
+                const newY = currentY + dir.dy;
+    
+                // Mencegah jalur lurus lebih dari 4 langkah
+                const isTooStraight = 
+                    lastDirection && 
+                    dir.dx === lastDirection.dx && 
+                    dir.dy === lastDirection.dy && 
+                    straightSteps >= 3; // Ubah ke 3 untuk memastikan maks 4 langkah
+    
+                return (
+                    newX >= 0 && newX < this.maze[0].length &&
+                    newY >= 0 && newY < this.maze.length &&
+                    !isTooStraight &&
+                    this.isValidPathDirection(currentX, currentY, newX, newY)
+                );
+            });
+    
+            // Jika tidak ada arah valid, coba arah lain atau keluar
+            if (validDirections.length === 0) {
+                // Reset jalur atau coba arah berbeda
+                straightSteps = 0;
+                lastDirection = null;
+                break;
+            }
+    
+            // Pilih arah secara acak dari arah valid
+            const chosenDirection = validDirections[Math.floor(Math.random() * validDirections.length)];
+    
+            // Update status jalur lurus
+            if (lastDirection && 
+                chosenDirection.dx === lastDirection.dx && 
+                chosenDirection.dy === lastDirection.dy) {
+                straightSteps++;
+            } else {
+                straightSteps = 1;
+                lastDirection = chosenDirection;
+            }
+    
+            // Perbarui posisi
+            currentX += chosenDirection.dx;
+            currentY += chosenDirection.dy;
+    
             // Buka jalur
             if (this.maze[currentY][currentX] === 1 && 
                 !(currentX === this.player.x && currentY === this.player.y) &&
                 !(currentX === this.end.x && currentY === this.end.y)) {
                 this.maze[currentY][currentX] = 0;
             }
-
+    
             attempts++;
+    
+            // Paksa belok jika sudah 4 langkah lurus
+            if (straightSteps >= 4) {
+                // Reset jalur lurus
+                straightSteps = 0;
+                lastDirection = null;
+            }
         }
+    
+        // Tambahkan mekanisme pemaksaan jalur jika tidak mencapai titik akhir
+        if (currentX !== this.end.x || currentY !== this.end.y) {
+            this.forcePathToEnd(currentX, currentY);
+        }
+    }
+    
+    forcePathToEnd(startX, startY) {
+        let currentX = startX;
+        let currentY = startY;
+    
+        while (currentX !== this.end.x || currentY !== this.end.y) {
+            // Gerakkan menuju titik akhir dengan belok-belok
+            let dx = Math.sign(this.end.x - currentX);
+            let dy = Math.sign(this.end.y - currentY);
+    
+            // Pilih arah secara acak dengan prioritas menuju titik akhir
+            const directions = [
+                {dx: dx, dy: 0},  // Horizontal
+                {dx: 0, dy: dy}   // Vertikal
+            ];
+    
+            const chosenDirection = directions[Math.floor(Math.random() * directions.length)];
+    
+            currentX += chosenDirection.dx;
+            currentY += chosenDirection.dy;
+    
+            // Buka jalur
+            if (this.maze[currentY][currentX] === 1) {
+                this.maze[currentY][currentX] = 0;
+            }
+        }
+    }
+    
+    isValidPathDirection(startX, startY, endX, endY) {
+        const maxAdjacentOpenPaths = 2;
+        const neighbors = [
+            {x: endX-1, y: endY},
+            {x: endX+1, y: endY},
+            {x: endX, y: endY-1},
+            {x: endX, y: endY+1}
+        ];
+    
+        const openPaths = neighbors.filter(({x, y}) => 
+            x >= 0 && x < this.maze[0].length &&
+            y >= 0 && y < this.maze.length &&
+            this.maze[y][x] === 0
+        ).length;
+    
+        return openPaths <= maxAdjacentOpenPaths;
     }
 
     initializeMaze() {
